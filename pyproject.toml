@@ -1,0 +1,18 @@
+[build-system]
+requires = ["setuptools>=61.0"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "juniorpithon"
+version = "1.0.0"
+description = "Pi Network Native Python IDE & Dynamic Dashboard."
+authors = [{name = "JuniorCloud LLC"}]
+dependencies = [
+    "fastapi>=0.100.0",
+    "uvicorn>=0.22.0",
+    "numpy>=1.26.0",
+    "requests>=2.31.0"
+]
+
+[project.scripts]
+juniorpi = "juniorpithon.app_main:launch"

@@ -1,0 +1,64 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>JuniorPiThon Ecosystem</title>
+    <style>
+        body { background-color: #0d1117; color: #c9d1d9; font-family: 'Courier New', Courier, monospace; margin: 0; padding: 20px; }
+        .header { border-bottom: 1px solid #30363d; padding-bottom: 10px; margin-bottom: 20px; display: flex; justify-content: space-between; align-items: center; }
+        .btn-pi { background-color: #f3a638; color: #000; border: none; padding: 8px 16px; font-weight: bold; cursor: pointer; border-radius: 4px; }
+        .grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(250px, 1fr)); gap: 20px; }
+        .card { background-color: #161b22; border: 1px solid #30363d; border-radius: 6px; padding: 15px; }
+        .positive { color: #3fb950; }
+        .negative { color: #f85149; }
+        .neutral { color: #58a6ff; }
+        .console { background-color: #010409; border: 1px solid #30363d; padding: 10px; margin-top: 20px; font-size: 0.9em; height: 100px; overflow-y: auto;}
+    </style>
+</head>
+<body>
+    <div class="header">
+        <h2>JuniorPiThon | User Modulated UI</h2>
+        <button class="btn-pi">Authorize Gas (0.001 Pi)</button>
+    </div>
+    
+    <h3>IDE Emitted Metrics</h3>
+    <div class="grid" id="dynamic-dashboard"></div>
+    
+    <h3>Engine Console</h3>
+    <div class="console" id="engine-logs">Waiting for compute cycles...</div>
+
+    <script>
+        const ws = new WebSocket(`ws://${window.location.host}/ws/terminal`);
+        const dashEl = document.getElementById('dynamic-dashboard');
+        const logsEl = document.getElementById('engine-logs');
+
+        ws.onmessage = (event) => {
+            const data = JSON.parse(event.data);
+            dashEl.innerHTML = ''; 
+            
+            const ui_state = data.engine.dynamic_ui;
+            
+            // Render dynamically emitted metrics from Python script
+            for (const [label, config] of Object.entries(ui_state)) {
+                if (config.type === 'metric') {
+                    dashEl.innerHTML += `
+                        <div class="card">
+                            <div style="font-size: 0.9em; color: #8b949e;">${label}</div>
+                            <div style="font-size: 1.5em; font-weight: bold;" class="${config.color}">
+                                ${config.value}
+                            </div>
+                        </div>
+                    `;
+                }
+            }
+
+            // Render emitted logs
+            if (ui_state.logs) {
+                logsEl.innerHTML = ui_state.logs.map(l => `> ${l}<br>`).join('');
+                logsEl.scrollTop = logsEl.scrollHeight;
+            }
+        };
+    </script>
+</body>
+</html>
