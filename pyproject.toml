@@ -5,7 +5,7 @@ build-backend = "setuptools.build_meta"
 [project]
 name = "juniorpithon"
 version = "1.0.0"
-description = "Pi Network Native Python IDE & Dynamic Dashboard."
+description = "Palantir-Grade Pi Network Mobile App & IDE."
 authors = [{name = "JuniorCloud LLC"}]
 dependencies = [
     "fastapi>=0.100.0",

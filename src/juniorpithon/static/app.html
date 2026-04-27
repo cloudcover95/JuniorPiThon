@@ -1,0 +1,92 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>JuniorPiThon SuperApp</title>
+    <style>
+        :root { --bg: #000000; --panel: #111111; --text: #E0E0E0; --pi-gold: #F3A638; --accent: #2A2A2A; --success: #00C853; }
+        body { margin: 0; font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif; background-color: var(--bg); color: var(--text); padding-bottom: 70px; }
+        .header { background-color: var(--panel); padding: 20px; text-align: center; border-bottom: 1px solid var(--accent); position: sticky; top: 0; z-index: 100; }
+        .header h1 { margin: 0; font-size: 1.5rem; color: var(--pi-gold); }
+        .tab-bar { position: fixed; bottom: 0; width: 100%; background-color: var(--panel); display: flex; justify-content: space-around; padding: 15px 0; border-top: 1px solid var(--accent); z-index: 100;}
+        .tab-btn { background: none; border: none; color: #888; font-size: 1rem; font-weight: bold; cursor: pointer; }
+        .tab-btn.active { color: var(--pi-gold); }
+        .view { display: none; padding: 20px; }
+        .view.active { display: block; }
+        .card { background-color: var(--panel); border-radius: 12px; padding: 15px; margin-bottom: 15px; border: 1px solid var(--accent); }
+        .card-title { font-size: 0.9rem; color: #888; text-transform: uppercase; margin-bottom: 10px; }
+        .card-value { font-size: 1.8rem; font-weight: bold; }
+        textarea { width: 100%; height: 200px; background-color: #000; color: #00FF00; font-family: monospace; border: 1px solid var(--accent); border-radius: 8px; padding: 10px; box-sizing: border-box; }
+        .btn-run { background-color: var(--pi-gold); color: #000; border: none; width: 100%; padding: 15px; border-radius: 8px; font-weight: bold; font-size: 1.1rem; margin-top: 10px; cursor: pointer; }
+        .console { background-color: #000; color: #fff; font-family: monospace; padding: 10px; border-radius: 8px; min-height: 100px; margin-top: 10px; white-space: pre-wrap; border: 1px solid var(--accent);}
+    </style>
+</head>
+<body>
+    <div class="header"><h1>JuniorPiThon</h1></div>
+
+    <div id="view-markets" class="view active">
+        <div class="card"><div class="card-title">Pi Network (Mainnet)</div><div class="card-value" style="color: var(--pi-gold);" id="pi-price">$--.--</div></div>
+        <div class="card"><div class="card-title">Bitcoin (BTC)</div><div class="card-value" id="btc-price">$--.--</div></div>
+        <div class="card"><div class="card-title">Tesla (TSLA)</div><div class="card-value" id="tsla-price">$--.--</div></div>
+    </div>
+
+    <div id="view-home" class="view">
+        <div class="card"><div class="card-title">48V LiFePO4 Array</div><div class="card-value" id="jh-soc">--%</div></div>
+        <div class="card"><div class="card-title">Solar Input (W)</div><div class="card-value" id="jh-solar" style="color: var(--success);">-- W</div></div>
+        <div class="card"><div class="card-title">System Load (W)</div><div class="card-value" id="jh-load">-- W</div></div>
+    </div>
+
+    <div id="view-ide" class="view">
+        <div class="card">
+            <div class="card-title">Sovereign Edge Scripting</div>
+            <p style="font-size: 0.8rem; color: #888;">Run Python locally. Costs 0.0014 Pi Gas per execution.</p>
+            <textarea id="code-editor"># JuniorPiThon Edge Script
+print("Connecting to Pi Mainnet...")
+print("Executing arbitrage node...")</textarea>
+            <button class="btn-run" onclick="runScript()">Run Script (Pay Pi Gas)</button>
+            <div class="console" id="ide-console">> Ready...</div>
+        </div>
+    </div>
+
+    <div class="tab-bar">
+        <button class="tab-btn active" onclick="switchTab('markets', this)">Markets</button>
+        <button class="tab-btn" onclick="switchTab('home', this)">JuniorHome</button>
+        <button class="tab-btn" onclick="switchTab('ide', this)">IDE</button>
+    </div>
+
+    <script>
+        function switchTab(tabId, btn) {
+            document.querySelectorAll('.view').forEach(v => v.classList.remove('active'));
+            document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
+            document.getElementById('view-' + tabId).classList.add('active');
+            btn.classList.add('active');
+        }
+
+        const ws = new WebSocket(`ws://${window.location.host}/ws/stream`);
+        ws.onmessage = (event) => {
+            const data = JSON.parse(event.data);
+            document.getElementById('pi-price').innerText = `$${data.markets['PI-USD'].toFixed(2)}`;
+            document.getElementById('btc-price').innerText = `$${data.markets['BTC-USD'].toFixed(2)}`;
+            document.getElementById('tsla-price').innerText = `$${data.markets['TSLA'].toFixed(2)}`;
+            document.getElementById('jh-soc').innerText = `${data.iot.battery_soc}%`;
+            document.getElementById('jh-solar').innerText = `${data.iot.solar_watts} W`;
+            document.getElementById('jh-load').innerText = `${data.iot.load_watts} W`;
+        };
+
+        async function runScript() {
+            const code = document.getElementById('code-editor').value;
+            const consoleEl = document.getElementById('ide-console');
+            consoleEl.innerText = "> Authorizing Pi Gas...\n> Compiling...";
+            
+            const response = await fetch('/api/execute', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ code: code, user_id: "pi_user_99" })
+            });
+            const result = await response.json();
+            consoleEl.innerText = `> Status: ${result.status}\n> Output:\n${result.output}`;
+        }
+    </script>
+</body>
+</html>
